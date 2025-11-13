@@ -3,24 +3,25 @@ from . import ktamv_utl as utl
 from .ktamv_utl import NozzleNotFoundException
 import logging
 import json
+import shutil
+import os
 
-
-
+SAVE_ROOT_DIR = "/home/klipper/nozzle_detection_results"
 class ktamv:
     __FRAME_WIDTH = 640
     __FRAME_HEIGHT = 480
 
     def __init__(self, config):
         # Load config values
-        self.camera_url = config.get("nozzle_cam_url")
-        self.server_url = config.get("server_url")
-        self.speed = config.getfloat("move_speed", 1800.0, above=10.0)
+        self.camera_url = config.get("nozzle_cam_url", "http://127.0.0.1/webrtc/api/frame.jpeg?src=Alignment_RAW")
+        self.server_url = config.get("server_url", "http://127.0.0.1:8085")
+        self.speed = config.getfloat("move_speed", 3000.0, above=10.0)
         self.calib_iterations = config.getint(
             "calib_iterations", 1, minval=1, maxval=25
         )
         self.calib_value = config.getfloat("calib_value", 1.0, above=0.25)
         self.send_frame_to_cloud = config.getboolean("send_frame_to_cloud", False)
-        self.detection_tolerance = config.getint("detection_tolerance", 0, minval=0, maxval=5)
+        self.detection_tolerance = config.getint("detection_tolerance", 0.01, minval=0, maxval=5)
 
         # Initialize variables
         self.mpp = None  # Average mm per pixel
@@ -99,6 +100,8 @@ class ktamv:
         self._preview(gcmd, action="stop")
             
     def _preview(self, gcmd, action="start"):
+        if os.path.exists(SAVE_ROOT_DIR):
+            shutil.rmtree(SAVE_ROOT_DIR)
         try:
             rr = utl.send_srv_command(
                 self.server_url,

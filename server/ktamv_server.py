@@ -8,6 +8,10 @@ from waitress import serve
 import logging, json, traceback
 from dataclasses import dataclass, field
 from ktamv_server_dm import Ktamv_Server_Detection_Manager as dm
+from logging.handlers import TimedRotatingFileHandler
+
+LOG_DIR = "../../printer_data/logs"
+LOG_FILE = os.path.join(LOG_DIR, "ktamv_server.log")
 
 __logdebug = ""
 # URL to the cloud server
@@ -33,17 +37,29 @@ __error_message_to_image = ""
 # Indicates if preview is running
 __preview_running = False
 
-# Create logs folder if it doesn't exist and configure logging
-if not os.path.exists("./logs"):
-    os.makedirs("logs")
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    datefmt="%a, %d %b %Y %H:%M:%S",
-    filename="logs/ktamv_server.log",
-    filemode="w",
-    encoding="utf-8",
-)
+def setup_logging():
+    os.makedirs(LOG_DIR, exist_ok=True)
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logger.handlers.clear()
+
+    handler = TimedRotatingFileHandler(
+        filename=LOG_FILE,
+        when='midnight',
+        interval=1,
+        backupCount=5,
+        encoding='utf-8',
+        delay=True
+    )
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)-8s %(message)s",
+        datefmt="%a, %d %b %Y %H:%M:%S"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+setup_logging()
 
 # create a Flask app
 app = Flask(__name__)
@@ -213,7 +229,7 @@ def getAllReqests():
 
 @app.route("/")
 def index():
-    file_path = "logs/ktamv_server.log"
+    file_path = "../../printer_data/logs/ktamv_server.log"
     content = "<H1>kTAMV Server is running</H1><br><b>Log file:</b><br>"
     content += (
         "Frame width: "
@@ -477,6 +493,7 @@ def log_clear():
 def log(message: str):
     global __logdebug
     __logdebug += message + "<br>"
+    logging.debug(message)
 
 
 def log_get():
@@ -490,7 +507,6 @@ def show_error_message_to_image(message : str):
 
 # Run the app on the specified port
 if __name__ == "__main__":
-    logger = logging.getLogger(__name__)
 
     # Create an argument parser
     parser = ArgumentParser()

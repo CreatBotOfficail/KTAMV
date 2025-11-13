@@ -117,7 +117,7 @@ def get_nozzle_position(server_url, reactor):
         # If nozzles were not found, raise exception
         elif _response["statuscode"] == 404:
             raise NozzleNotFoundException(
-                "Server did not find nozzle, found, got statuscode %s: %s. Try Cleaning the nozzle or adjust Z height. Verify with the KTAMV_SIMPLE_NOZZLE_POSITION command."
+                "Server did not find nozzle, found, got statuscode %s: %s. Try Cleaning the nozzle or adjust Z height."
                 % (str(_response["statuscode"]), str(_response["statusmessage"]))
             )
         else:

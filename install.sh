@@ -138,7 +138,7 @@ install_or_update_system_dependencies()
 
     # These we require to be installed in the OS.
     # Note we need to do this before we create our virtual environment
-    sudo apt update
+    # sudo apt update
     sudo apt install --yes ${PKGLIST}
     log_info "System package install complete."
 
@@ -184,17 +184,6 @@ check_klipper() {
         log_error "${ERROR}Klipper service not found! Please install Klipper first"
         exit -1
     fi
-}
-
-# 
-# Logic to link the extension to Klipper
-# 
-link_extension()
-{
-    log_header "Linking extension to Klipper..."
-    log_blank
-    ln -sf "${EXTENSION_PATH}/ktamv.py" "${KLIPPER_HOME}/klippy/extras/ktamv.py"
-    ln -sf "${EXTENSION_PATH}/ktamv_utl.py" "${KLIPPER_HOME}/klippy/extras/ktamv_utl.py"
 }
 
 # 
@@ -264,10 +253,10 @@ install_update_manager() {
         if [ "${already_included}" -eq 0 ]; then
             echo "" >> "${dest}"    # Add a blank line
             echo "" >> "${dest}"    # Add a blank line
-            echo -e "[update_manager ktamv]]" >> "${dest}"    # Add the section header
+            echo -e "[update_manager ktamv]" >> "${dest}"
             echo -e "type: git_repo" >> "${dest}"
             echo -e "path: ~/kTAMV" >> "${dest}"
-            echo -e "origin: https://github.com/TypQxQ/kTAMV.git" >> "${dest}"
+            echo -e "origin: CreatBotOfficail/KTAMV" >> "${dest}"
             echo -e "primary_branch: main" >> "${dest}"
             echo -e "install_script: install.sh" >> "${dest}"
             echo -e "managed_services: klipper" >> "${dest}"
@@ -278,62 +267,6 @@ install_update_manager() {
     else
         log_error "moonraker.conf not found!"
     fi
-}
-
-# 
-# Logic to install the configuration to Klipper
-# 
-install_klipper_config() {
-    log_header "Adding configuration to printer.cfg"
-
-    # Add configuration to printer.cfg if it doesn't exist
-    dest=${KLIPPER_CONFIG_HOME}/printer.cfg
-    if test -f $dest; then
-        # Backup the original printer.cfg file
-        next_dest="$(nextfilename "$dest")"
-        log_info "Copying original printer.cfg file to ${next_dest}"
-        cp ${dest} ${next_dest}
-
-        # Add the configuration to printer.cfg
-        # This example assumes that that both the server and the webcam stream are running on the same machine as Klipper
-        already_included=$(grep -c '\[ktamv\]' ${dest} || true)
-        if [ "${already_included}" -eq 0 ]; then
-            echo "" >> "${dest}"    # Add a blank line
-            echo "" >> "${dest}"    # Add a blank line
-            echo -e "[ktamv]" >> "${dest}"    # Add the section header
-            echo -e "nozzle_cam_url: http://localhost/webcam/snapshot?max_delay=0" >> "${dest}"   # Add the address of the webcam stream that will be accessed by the server
-            echo -e "server_url: http://localhost:${PORT}" >> "${dest}"    # Add the address of the kTAMV server that will be accessed Klipper
-            echo -e "move_speed: 1800" >> "${dest}"   # Add the speed at which the toolhead moves when aligning
-            echo -e "send_frame_to_cloud: ${SEND_IMAGES}" >> "${dest}"   # If true, the images of the nozzle will be sent to the developer
-            echo -e "detection_tolerance: 0" >> "${dest}"   # number of pixels to have as tolerance when detecting the nozzle.
-
-            log_info "Added kTAMV configuration to printer.cfg"
-            log_important "Please check the configuration in printer.cfg and adjust it as needed"
-        else
-            log_error "[ktamv] already exists in printer.cfg - skipping adding it there"
-        fi
-    else
-        log_error "File printer.cfg file not found! Cannot add kTAMV configuration. Do it manually."
-    fi
-
-    # Add the inclusion of macros.cfg to printer.cfg if it doesn't exist
-    already_included=$(grep -c '\[include ktamv_macros.cfg\]' ${dest} || true)
-    if [ "${already_included}" -eq 0 ]; then
-        echo "" >> "${dest}"    # Add a blank line
-        echo -e "[include ktamv-macros.cfg]" >> "${dest}"    # Add the section header
-    else
-        log_error "[include ktamv-macros.cfg] already exists in printer.cfg - skipping adding it there"
-    fi
-    
-    if [ ! -f "${KLIPPER_CONFIG_HOME}/ktamv-macros.cfg" ]; then
-        log_info "Copying ktamv-macros.cfg to ${KLIPPER_CONFIG_HOME}"
-        cp ${KTAMV_REPO_DIR}/ktamv-macros.cfg ${KLIPPER_CONFIG_HOME}
-    else
-        log_error "[include ktamv-macros.cfg] already exists in printer.cfg - skipping adding it there"
-    fi
-    # Restart Klipper
-    restart_klipper
-
 }
 
 # 
@@ -402,129 +335,22 @@ start_server()
     sudo systemctl restart kTAMV_server
 }
 
-
-# 
-# Logic to ask a question and get a yes or no answer while displaying a prompt under installation
-# 
-prompt_yn() {
-    while true; do
-        read -n1 -p "
-$@ (y/n)? " yn
-        case "${yn}" in
-            Y|y)
-                echo "y" 
-                break;;
-            N|n)
-                echo "n" 
-                break;;
-            *)
-                ;;
-        esac
-    done
-}
-
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
 log_blank
 log_header "                     kTAMV"
 log_header "   Klipper Tool Alignment (using) Machine Vision"
-log_blank
 log_blank
 log_important "kTAMV is used to align your printer's toolheads using machine vision."
 log_blank
 log_info "Usage: $0 [-p <server_port>] [-k <klipper_home_dir>] [-c <klipper_config_dir>]"
 log_info "[-m <moonraker_home_dir>] [-s <system_dir>]"
 log_blank
-log_blank
 log_important "This script will install the kTAMV client to Klipper and the kTAMV server as a service on port ${PORT}."
 log_important "It will update Rasberry Pi OS and install all required packages."
-log_important "It will add the base configuration in printer.cfg and moonraker.conf."
 log_blank
-yn=$(prompt_yn "Do you want to continue?")
-echo
-case $yn in
-    y)
-        ;;
-    n)
-        log_info "You can run this script again later to install kTAMV."
-        log_blank
-    exit 0
-        ;;
-esac
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_blank
-log_header "                     kTAMV"
-log_header "   Klipper Tool Alignment (using) Machine Vision"
-log_blank
-log_blank
-log_important "Do you want to contribute to the development of kTAMV?"
-log_info "I would love if you would like to share the images of the nozzle and obtained results taken when finding the nozzle."
-log_info "I plan to use it to improve the algorithm and maybe train an AI as the next step."
-log_info "You can change this setting later in printer.cfg."
+log_info "Auto-confirming installation (skip interactive prompt)..."
 log_blank
 
-yn=$(prompt_yn "Do you want to continue?")
-echo
-case $yn in
-    y)
-        log_info "Thank you, this will help a lot!"
-        log_blank
-        SEND_IMAGES="true"
-        ;;
-    n)
-        log_info "Will not send any info."
-        log_blank
-        SEND_IMAGES="false"
-        ;;
-esac
-
-
-
-while getopts "k:c:m:ids" arg; do
+while getopts "k:c:m:s:p" arg; do
     case $arg in
         k) KLIPPER_HOME=${OPTARG};;
         m) MOONRAKER_HOME=${OPTARG};;
@@ -542,7 +368,6 @@ function nextfilename {
         printf "%s-%s.%s-old" ${name%%.*} $(date '+%Y%m%d_%H%M%S') ${name#*.}
     fi
 }
-
 
 # Make sure we aren't running as root
 verify_ready
@@ -563,18 +388,12 @@ verify_home_dirs
 # Now make sure the virtual env exists, is updated, and all of our currently required PY packages are updated.
 install_or_update_python_env
 
-# Link the extension to Klipper
-link_extension
-
 # Install the update manager to Moonraker
 install_update_manager
 
 # Install kTAMV as a systemd service and then add it to the service list moonraker.asvc
 install_sysd
 
-# Install the configuration to Klipper
-install_klipper_config
-
 log_blank
 log_blank
-log_important "kTAMV is now installed. Settings can be found in the printer.cfg file."
+log_important "kTAMV is now installed."
