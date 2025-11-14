@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from ktamv_server_dm import Ktamv_Server_Detection_Manager as dm
 from logging.handlers import TimedRotatingFileHandler
 
-LOG_DIR = "../../printer_data/logs"
+LOG_DIR = os.path.expanduser("~/printer_data/logs")
 LOG_FILE = os.path.join(LOG_DIR, "ktamv_server.log")
 
 __logdebug = ""
