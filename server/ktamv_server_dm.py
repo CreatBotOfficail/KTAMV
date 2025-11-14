@@ -10,7 +10,7 @@ CENTER = np.array([IMG_W//2, IMG_H//2])
 MAX_FAIL = 3
 FRAME_RESET = 100
 
-SAVE_ROOT_DIR = "/home/klipper/KTAMV/nozzle_detection_results"
+SAVE_ROOT_DIR = "/tmp/nozzle_detection_results"
 call_count = 0
 
 @dataclass
